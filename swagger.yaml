@@ -1,718 +1,1674 @@
----
-swagger: "2.0"
+openapi: 3.0.2
 info:
-  description: "This is a sample server Petstore server.  You can find out more about\
-    \ Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).\
-    \  For this sample, you can use the api key `special-key` to test the authorization\
-    \ filters."
-  version: "1.0.5"
-  title: "Swagger Petstore"
-  termsOfService: "http://swagger.io/terms/"
+  version: 3.0.0
+  title: Ethelo Engine Api
+  description: Limited API for solving with the Ethelo Engine
   contact:
-    email: "apiteam@swagger.io"
-  license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "petstore.swagger.io"
-basePath: "/v2"
-tags:
-- name: "pet"
-  description: "Everything about your Pets"
-  externalDocs:
-    description: "Find out more"
-    url: "http://swagger.io"
-- name: "store"
-  description: "Access to Petstore orders"
-- name: "user"
-  description: "Operations about user"
-  externalDocs:
-    description: "Find out more about our store"
-    url: "http://swagger.io"
-schemes:
-- "https"
-- "http"
+    name: Laura Williams
 paths:
-  /pet/{petId}/uploadImage:
+  /v3/decisions/:
     post:
-      tags:
-      - "pet"
-      summary: "uploads an image"
-      description: ""
-      operationId: "uploadFile"
-      consumes:
-      - "multipart/form-data"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to update"
-        required: true
-        type: "integer"
-        format: "int64"
-      - name: "additionalMetadata"
-        in: "formData"
-        description: "Additional data to pass to server"
-        required: false
-        type: "string"
-      - name: "file"
-        in: "formData"
-        description: "file to upload"
-        required: false
-        type: "file"
+      operationId: create/v3/decision
+      description: Create Decision Configuration
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                  additionalProperties: false
+                  properties:
+                    type:
+                      $ref: '#/components/schemas/type'
+                    id:
+                      $ref: '#/components/schemas/id'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/components/schemas/link'
+                    attributes:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                          nullable: false
+                          description: Identifying string for Decision
+                        info:
+                          nullable: true
+                          description: content for Decision, often with html
+                          type: string
+                        slug:
+                          nullable: false
+                          description: url-safe unique identifier
+                          type: string
+                        option-vote-bins:
+                          type: integer
+                          nullable: false
+                          default: 5
+                          example: 5
+                          minimum: 1
+                          maximum: 7
+                          description: the number of bins to use in voting interfaces and results analysis
+                        max-scenarios:
+                          type: integer
+                          nullable: false
+                          default: 3
+                          example: 3
+                          minimum: 1
+                          maximum: 5
+                          description: maximum amount of group scenarios to generate
       responses:
-        200:
-          description: "successful operation"
+        '200':
+          description: create/v3/decision
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Decision'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link members related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '403':
+          description: '[Forbidden](https://jsonapi.org/format/#crud-updating-responses-403)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Related resource does not exist](https://jsonapi.org/format/#crud-updating-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+  /v3/decisions/{decision_id}/:
+    get:
+      operationId: retrieve/v3/decision/{decision_id}/
+      description: An Ethelo Decision Configuration
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            $ref: "#/definitions/ApiResponse"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet:
+            type: integer
+      responses:
+        '200':
+          description: retrieve/v3/decision/{decision_id}/
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Decision'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
     post:
-      tags:
-      - "pet"
-      summary: "Add a new pet to the store"
-      description: ""
-      operationId: "addPet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
+      operationId: update/v3/decision/{decision_id}/
+      description: Update Configuration
       parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
-      responses:
-        405:
-          description: "Invalid input"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-    put:
-      tags:
-      - "pet"
-      summary: "Update an existing pet"
-      description: ""
-      operationId: "updatePet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-        405:
-          description: "Validation exception"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByStatus:
-    get:
-      tags:
-      - "pet"
-      summary: "Finds Pets by status"
-      description: "Multiple status values can be provided with comma separated strings"
-      operationId: "findPetsByStatus"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "status"
-        in: "query"
-        description: "Status values that need to be considered for filter"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-          enum:
-          - "available"
-          - "pending"
-          - "sold"
-          default: "available"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid status value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByTags:
-    get:
-      tags:
-      - "pet"
-      summary: "Finds Pets by tags"
-      description: "Multiple tags can be provided with comma separated strings. Use\
-        \ tag1, tag2, tag3 for testing."
-      operationId: "findPetsByTags"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "tags"
-        in: "query"
-        description: "Tags to filter by"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
+            type: string
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                  additionalProperties: false
+                  properties:
+                    type:
+                      $ref: '#/components/schemas/type'
+                    id:
+                      $ref: '#/components/schemas/id'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/components/schemas/link'
+                    attributes:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                          nullable: false
+                          description: Identifying string for Decision
+                        info:
+                          nullable: true
+                          description: content for Decision, often with html
+                          type: string
+                        slug:
+                          nullable: false
+                          description: url-safe unique identifier
+                          type: string
+                        current-mode:
+                          default: pending
+                          example: open
+                          nullable: false
+                          enum:
+                            - pending
+                            - open
+                            - finished
+                          description: state/mode of decision. Only open Decisions can accept votes
+                        option-vote-bins:
+                          type: integer
+                          nullable: false
+                          default: 5
+                          example: 5
+                          minimum: 1
+                          maximum: 7
+                          description: the number of bins to use in voting interfaces and results analysis
+                        max-scenarios:
+                          type: integer
+                          nullable: false
+                          default: 3
+                          example: 3
+                          minimum: 1
+                          maximum: 5
+                          description: maximum amount of group scenarios to generate
+
       responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid tag value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-      deprecated: true
-  /pet/{petId}:
-    get:
-      tags:
-      - "pet"
-      summary: "Find pet by ID"
-      description: "Returns a single pet"
-      operationId: "getPetById"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to return"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - api_key: []
-    post:
-      tags:
-      - "pet"
-      summary: "Updates a pet in the store with form data"
-      description: ""
-      operationId: "updatePetWithForm"
-      consumes:
-      - "application/x-www-form-urlencoded"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet that needs to be updated"
-        required: true
-        type: "integer"
-        format: "int64"
-      - name: "name"
-        in: "formData"
-        description: "Updated name of the pet"
-        required: false
-        type: "string"
-      - name: "status"
-        in: "formData"
-        description: "Updated status of the pet"
-        required: false
-        type: "string"
-      responses:
-        405:
-          description: "Invalid input"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
+        '200':
+          description: partial_update/v3/decision/{decision_id}/
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Decision'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link members related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '403':
+          description: '[Forbidden](https://jsonapi.org/format/#crud-updating-responses-403)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Related resource does not exist](https://jsonapi.org/format/#crud-updating-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
     delete:
-      tags:
-      - "pet"
-      summary: "Deletes a pet"
-      description: ""
-      operationId: "deletePet"
-      produces:
-      - "application/json"
-      - "application/xml"
+      operationId: destroy/v3/decision/{decision_id}/
+      description: delete a decision
       parameters:
-      - name: "api_key"
-        in: "header"
-        required: false
-        type: "string"
-      - name: "petId"
-        in: "path"
-        description: "Pet id to delete"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /store/order:
-    post:
-      tags:
-      - "store"
-      summary: "Place an order for a pet"
-      description: ""
-      operationId: "placeOrder"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "order placed for purchasing the pet"
-        required: true
-        schema:
-          $ref: "#/definitions/Order"
-      responses:
-        200:
-          description: "successful operation"
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid Order"
-  /store/order/{orderId}:
+            type: string
+      responses:
+        '200':
+          description: '[OK](https://jsonapi.org/format/#crud-deleting-responses-200)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/onlymeta'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Resource does not exist](https://jsonapi.org/format/#crud-deleting-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+  /v3/decisions/{decision_id}/participants/:
     get:
-      tags:
-      - "store"
-      summary: "Find purchase order by ID"
-      description: "For valid response try integer IDs with value >= 1 and <= 10.\
-        \ Other values will generated exceptions"
-      operationId: "getOrderById"
-      produces:
-      - "application/json"
-      - "application/xml"
+      operationId: List/v3/decisions/{decision_id}/participants/
+      description: 'Participants configured for decision'
       parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of pet that needs to be fetched"
-        required: true
-        type: "integer"
-        maximum: 10
-        minimum: 1
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
+        - $ref: '#/components/parameters/sort'
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
+            type: integer
+        - name: page[number]
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page[size]
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+        - name: sort
+          required: false
+          in: query
+          description: Which field to use when ordering the results.
+          schema:
+            type: string
+        - name: filter[slug]
+          required: false
+          in: query
+          description: slug
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List/v3/decisions/{decision_id}/participants/
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participant'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link participants related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+    post:
+      operationId: create/v3/decision/{decision_id}/participants
+      description: Update Participant
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                  additionalProperties: false
+                  properties:
+                    type:
+                      $ref: '#/components/schemas/type'
+                    id:
+                      $ref: '#/components/schemas/id'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/components/schemas/link'
+                    attributes:
+                      type: object
+                      properties:
+                        slug:
+                          type: string
+                          description: unique identifier
+                        influence:
+                          type: integer
+                          description: weighting for votes
+
+      responses:
+        '200':
+          description: create/v3/decision/{decision_id}/participants
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Decision'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link members related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '403':
+          description: '[Forbidden](https://jsonapi.org/format/#crud-updating-responses-403)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Related resource does not exist](https://jsonapi.org/format/#crud-updating-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+  /v3/decisions/{decision_id}/participants/{participant_id}:
+    get:
+      operationId: retrieve/v3/decisions/{decision_id}/participants/{participant_id}
+      description: An Ethelo Decision Configuration
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+        - name: participant_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: retrieve/v3/decisions/{decision_id}/participants/{participant_id}
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Participant'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+    post:
+      operationId: update/v3/decision/{decision_id}/participants/{participant_id}
+      description: Update Participant
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+        - name: participant_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                  additionalProperties: false
+                  properties:
+                    type:
+                      $ref: '#/components/schemas/type'
+                    id:
+                      $ref: '#/components/schemas/id'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/components/schemas/link'
+                    attributes:
+                      type: object
+                      properties:
+                        slug:
+                          type: string
+                          description: unique identifier
+                        influence:
+                          type: integer
+                          description: weighting for votes
+      responses:
+        '200':
+          description: partial_update/v3/decision/{decision_id}/{participant_id}
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Decision'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link members related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '403':
+          description: '[Forbidden](https://jsonapi.org/format/#crud-updating-responses-403)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Related resource does not exist](https://jsonapi.org/format/#crud-updating-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
     delete:
-      tags:
-      - "store"
-      summary: "Delete purchase order by ID"
-      description: "For valid response try integer IDs with positive integer value.\
-        \ Negative or non-integer values will generate API errors"
-      operationId: "deleteOrder"
-      produces:
-      - "application/json"
-      - "application/xml"
+      operationId: destroy/v3/decision/{decision_id}/participants/{participant_id}
+      description: delete a Participant
       parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of the order that needs to be deleted"
-        required: true
-        type: "integer"
-        minimum: 1
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
-  /store/inventory:
-    get:
-      tags:
-      - "store"
-      summary: "Returns pet inventories by status"
-      description: "Returns a map of status codes to quantities"
-      operationId: "getInventory"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "successful operation"
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            type: "object"
-            additionalProperties:
-              type: "integer"
-              format: "int32"
-      security:
-      - api_key: []
-  /user/createWithArray:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithArrayInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
-        required: true
-        schema:
-          type: "array"
-          items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/createWithList:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithListInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
-        required: true
-        schema:
-          type: "array"
-          items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/{username}:
-    get:
-      tags:
-      - "user"
-      summary: "Get user by user name"
-      description: ""
-      operationId: "getUserByName"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be fetched. Use user1 for testing. "
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
+            type: integer
+        - name: participant_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            $ref: "#/definitions/User"
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-    put:
-      tags:
-      - "user"
-      summary: "Updated user"
-      description: "This can only be done by the logged in user."
-      operationId: "updateUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "name that need to be updated"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Updated user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
+            type: integer
       responses:
-        400:
-          description: "Invalid user supplied"
-        404:
-          description: "User not found"
+        '200':
+          description: '[OK](https://jsonapi.org/format/#crud-deleting-responses-200)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/onlymeta'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Resource does not exist](https://jsonapi.org/format/#crud-deleting-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+  /v3/decisions/{decision_id}/bin_votes:
+    get:
+      operationId: List/v3/decisions/{decision_id}/bin_votes/
+      description: 'Participants configured for decision'
+      parameters:
+        - $ref: '#/components/parameters/sort'
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+        - name: page[number]
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page[size]
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+        - name: sort
+          required: false
+          in: query
+          description: Which field to use when ordering the results.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List/v3/decisions/{decision_id}/bin_votes/
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BinVote'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link bin_votes related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+    post:
+      operationId: upsert/v3/decision/{decision_id}/bin_votes
+      description: upsert BinVote
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                  additionalProperties: false
+                  properties:
+                    type:
+                      $ref: '#/components/schemas/type'
+                    id:
+                      $ref: '#/components/schemas/id'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/components/schemas/link'
+                    attributes:
+                      type: object
+                      properties:
+                        bin:
+                          type: integer
+                          description: selected bin
+                      required:
+                        - bin
+                    relationships:
+                      type: object
+                      properties:
+                        participant:
+                          $ref: '#/components/schemas/reltoone'
+                        option:
+                          $ref: '#/components/schemas/reltoone'
+                        criteria:
+                          $ref: '#/components/schemas/reltoone'
+      responses:
+        '200':
+          description: upsert/v3/decision/{decision_id}/bin_votes
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Decision'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link members related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '403':
+          description: '[Forbidden](https://jsonapi.org/format/#crud-updating-responses-403)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Related resource does not exist](https://jsonapi.org/format/#crud-updating-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
     delete:
-      tags:
-      - "user"
-      summary: "Delete user"
-      description: "This can only be done by the logged in user."
-      operationId: "deleteUser"
-      produces:
-      - "application/json"
-      - "application/xml"
+      operationId: destroy/v3/decision/{decision_id}/bin_votes
+      description: delete a BinVote
       parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be deleted"
-        required: true
-        type: "string"
-      responses:
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-  /user/login:
-    get:
-      tags:
-      - "user"
-      summary: "Logs user into the system"
-      description: ""
-      operationId: "loginUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "query"
-        description: "The user name for login"
-        required: true
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "The password for login in clear text"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          headers:
-            X-Expires-After:
-              type: "string"
-              format: "date-time"
-              description: "date in UTC when token expires"
-            X-Rate-Limit:
-              type: "integer"
-              format: "int32"
-              description: "calls per hour allowed by the user"
+        - name: decision_id
+          in: path
+          required: true
+          description: globally unique id
           schema:
-            type: "string"
-        400:
-          description: "Invalid username/password supplied"
-  /user/logout:
+            type: integer
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                  additionalProperties: false
+                  properties:
+                    type:
+                      $ref: '#/components/schemas/type'
+                    id:
+                      $ref: '#/components/schemas/id'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/components/schemas/link'
+                    relationships:
+                      type: object
+                      properties:
+                        participant:
+                          $ref: '#/components/schemas/reltoone'
+                        option:
+                          $ref: '#/components/schemas/reltoone'
+                        criteria:
+                          $ref: '#/components/schemas/reltoone'
+      responses:
+        '200':
+          description: '[OK](https://jsonapi.org/format/#crud-deleting-responses-200)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/onlymeta'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: '[Resource does not exist](https://jsonapi.org/format/#crud-deleting-responses-404)'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+  /v3/decisions/{decision_id}/scenarios/:
     get:
-      tags:
-      - "user"
-      summary: "Logs out current logged in user session"
-      description: ""
-      operationId: "logoutUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters: []
-      responses:
-        default:
-          description: "successful operation"
-  /user:
-    post:
-      tags:
-      - "user"
-      summary: "Create user"
-      description: "This can only be done by the logged in user."
-      operationId: "createUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
+      operationId: List/v3/decisions/{decision_id}/scenarios/
+      description: 'Scenarios calculated for decision'
       parameters:
-      - in: "body"
-        name: "body"
-        description: "Created user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
+        - name: decision_id
+          required: true
+          in: path
+          description: unique Id for Decision
+          schema:
+            type: string
+        - name: participant_id
+          required: false
+          in: query
+          description: unique Id for Participant
+          schema:
+            type: string
+        - name: with global
+          required: false
+          in: query
+          description: toggle if global scenario should be included
+          schema:
+            type: string
       responses:
-        default:
-          description: "successful operation"
-securityDefinitions:
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
-  petstore_auth:
-    type: "oauth2"
-    authorizationUrl: "https://petstore.swagger.io/oauth/authorize"
-    flow: "implicit"
-    scopes:
-      read:pets: "read your pets"
-      write:pets: "modify pets in your account"
-definitions:
-  ApiResponse:
-    type: "object"
-    properties:
-      code:
-        type: "integer"
-        format: "int32"
-      type:
-        type: "string"
-      message:
-        type: "string"
-  Category:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Category"
-  Pet:
-    type: "object"
-    required:
-    - "name"
-    - "photoUrls"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      category:
-        $ref: "#/definitions/Category"
-      name:
-        type: "string"
-        example: "doggie"
-      photoUrls:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          type: "string"
-          xml:
-            name: "photoUrl"
-      tags:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          xml:
-            name: "tag"
-          $ref: "#/definitions/Tag"
-      status:
-        type: "string"
-        description: "pet status in the store"
-        enum:
-        - "available"
-        - "pending"
-        - "sold"
-    xml:
-      name: "Pet"
-  Tag:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Tag"
-  Order:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      petId:
-        type: "integer"
-        format: "int64"
-      quantity:
-        type: "integer"
-        format: "int32"
-      shipDate:
-        type: "string"
-        format: "date-time"
-      status:
-        type: "string"
-        description: "Order Status"
-        enum:
-        - "placed"
-        - "approved"
-        - "delivered"
-      complete:
-        type: "boolean"
-    xml:
-      name: "Order"
-  User:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      username:
-        type: "string"
-      firstName:
-        type: "string"
-      lastName:
-        type: "string"
-      email:
-        type: "string"
-      password:
-        type: "string"
-      phone:
-        type: "string"
-      userStatus:
-        type: "integer"
-        format: "int32"
-        description: "User Status"
-    xml:
-      name: "User"
-externalDocs:
-  description: "Find out more about Swagger"
-  url: "http://swagger.io"
+        '200':
+          description: List/v3/decisions/{decision_id}/scenarios/
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Scenario'
+                  included:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      $ref: '#/components/schemas/resource'
+                  links:
+                    description: Link scenarios related to primary data
+                    allOf:
+                      - $ref: '#/components/schemas/links'
+                      - $ref: '#/components/schemas/pagination'
+                  jsonapi:
+                    $ref: '#/components/schemas/jsonapi'
+        '401':
+          description: not authorized
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+        '404':
+          description: not found
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/failure'
+components:
+  schemas:
+    jsonapi:
+      type: object
+      description: The server's implementation
+      properties:
+        version:
+          type: string
+        meta:
+          $ref: '#/components/schemas/meta'
+      additionalProperties: false
+    resource:
+      type: object
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        attributes:
+          type: object
+        relationships:
+          type: object
+        links:
+          $ref: '#/components/schemas/links'
+        meta:
+          $ref: '#/components/schemas/meta'
+    link:
+      oneOf:
+        - description: a string containing the link's URL
+          type: string
+          format: uri-reference
+        - type: object
+          required:
+            - href
+          properties:
+            href:
+              description: a string containing the link's URL
+              type: string
+              format: uri-reference
+            meta:
+              $ref: '#/components/schemas/meta'
+    links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/link'
+    reltoone:
+      description: a singular 'to-one' relationship
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/relationshipLinks'
+        data:
+          $ref: '#/components/schemas/relationshipToOne'
+        meta:
+          $ref: '#/components/schemas/meta'
+    relationshipToOne:
+      description: reference to other resource in a to-one relationship
+      anyOf:
+        - $ref: '#/components/schemas/nulltype'
+        - $ref: '#/components/schemas/linkage'
+    reltomany:
+      description: a multiple 'to-many' relationship
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/relationshipLinks'
+        data:
+          $ref: '#/components/schemas/relationshipToMany'
+        meta:
+          $ref: '#/components/schemas/meta'
+    relationshipLinks:
+      description: optional references to other resource objects
+      type: object
+      additionalProperties: true
+      properties:
+        self:
+          $ref: '#/components/schemas/link'
+        related:
+          $ref: '#/components/schemas/link'
+    relationshipToMany:
+      description: An array of objects each containing the 'type' and 'id' for to-many
+        relationships
+      type: array
+      items:
+        $ref: '#/components/schemas/linkage'
+      uniqueItems: true
+    ResourceIdentifierObject:
+      oneOf:
+        - $ref: '#/components/schemas/relationshipToOne'
+        - $ref: '#/components/schemas/relationshipToMany'
+    linkage:
+      type: object
+      description: the 'type' and 'id'
+      required:
+        - type
+        - id
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        meta:
+          $ref: '#/components/schemas/meta'
+    pagination:
+      type: object
+      properties:
+        first:
+          $ref: '#/components/schemas/pageref'
+        last:
+          $ref: '#/components/schemas/pageref'
+        prev:
+          $ref: '#/components/schemas/pageref'
+        next:
+          $ref: '#/components/schemas/pageref'
+    pageref:
+      oneOf:
+        - type: string
+          format: uri-reference
+        - $ref: '#/components/schemas/nulltype'
+    failure:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          $ref: '#/components/schemas/errors'
+        meta:
+          $ref: '#/components/schemas/meta'
+        jsonapi:
+          $ref: '#/components/schemas/jsonapi'
+        links:
+          $ref: '#/components/schemas/links'
+    errors:
+      type: array
+      items:
+        $ref: '#/components/schemas/error'
+      uniqueItems: true
+    error:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        links:
+          $ref: '#/components/schemas/links'
+        code:
+          type: string
+        title:
+          type: string
+        detail:
+          type: string
+        source:
+          type: object
+          properties:
+            pointer:
+              type: string
+              description: A [JSON Pointer](https://tools.ietf.org/html/rfc6901) to
+                the associated entity in the request document [e.g. `/data` for a
+                primary data object, or `/data/attributes/title` for a specific attribute.
+            parameter:
+              type: string
+              description: A string indicating which query parameter caused the error.
+            meta:
+              $ref: '#/components/schemas/meta'
+    onlymeta:
+      additionalProperties: false
+      properties:
+        meta:
+          $ref: '#/components/schemas/meta'
+    meta:
+      type: object
+      additionalProperties: true
+    datum:
+      description: singular item
+      properties:
+        data:
+          $ref: '#/components/schemas/resource'
+    nulltype:
+      type: object
+      nullable: true
+      default: null
+    type:
+      type: string
+      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+        member is used to describe resource objects that share common attributes and
+        relationships.
+    id:
+      type: string
+      description: "Each resource object\u2019s type and id pair MUST [identify](https://jsonapi.org/format/#document-resource-object-identification)\
+        \ a single, unique resource."
+    Decision:
+      type: object
+      x-examples:
+        Example 1:
+          rendered: '2024-09-17T16:18:26Z'
+          published: true
+          title: Pre-Governance Mandates
+          info: ''
+          slug: future-mandates
+          current-mode: open
+          option-vote-bins: 5
+          max-scenarios: 3
+          group-results: scenario
+          personal-results: all-options
+          last-published-at: '2024-09-17T16:18:26Z'
+          last-solved-at: '2024-09-17T16:18:26Z'
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            published:
+              type: boolean
+              default: false
+              readOnly: true
+              nullable: false
+              description: has Decision been published
+            title:
+              type: string
+              nullable: false
+              description: Identifying string for Decision
+            info:
+              nullable: true
+              description: content for Decision, often with html
+              type: string
+            slug:
+              nullable: false
+              description: url-safe unique identifier
+
+              type: string
+            current-mode:
+              default: pending
+              example: open
+              nullable: false
+              enum:
+                - pending
+                - open
+                - finished
+              description: state/mode of decision. Only open Decisions can accept votes
+            option-vote-bins:
+              type: integer
+              nullable: false
+              default: 5
+              example: 5
+              minimum: 1
+              maximum: 7
+              description: the number of bins to use in voting interfaces and results analysis
+            max-scenarios:
+              type: integer
+              nullable: false
+              default: 3
+              example: 3
+              minimum: 1
+              maximum: 5
+              description: maximum amount of group scenarios to generate
+            group-results:
+              default: scenarios
+              enum:
+                - scenarios
+                - all-options
+              readOnly: true
+              description: type of analysis to perform on group results
+            personal-results:
+              default: all-options
+              example: all-options
+              enum:
+                - scenarios
+                - all-options
+              readOnly: true
+              description: type of analysis to perform on personal results
+            last-published-at:
+              type: string
+              format: date-time
+              readOnly: true
+              description: date time of last publish
+            last-solved-at:
+              type: string
+              format: date-time
+              readOnly: true
+              description: date time of last successful solve
+            last-update-at:
+              type: string
+              format: date-time
+              readOnly: true
+              description: date time of last config update
+        relationships:
+          type: object
+          properties:
+            options:
+              $ref: '#/components/schemas/reltomany'
+            criterias:
+              $ref: '#/components/schemas/reltomany'
+            option-categories:
+              $ref: '#/components/schemas/reltomany'
+    OptionCategory:
+      type: object
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            title:
+              type: string
+              nullable: false
+              description: Identifying strinG
+            info:
+              nullable: true
+              description: content often with html
+              type: string
+            slug:
+              nullable: false
+              description: url-safe unique identifier
+
+              type: string
+            weighting:
+              type: integer
+              description: weighting to apply to item
+
+              nullable: false
+              default: 50
+            xor:
+              type: boolean
+              nullable: false
+              default: false
+              description: toggles one-and-only-one XOR constraint for this OptionCategory
+            sort:
+              default: 0
+              type: integer
+        relationships:
+          type: object
+          properties:
+            decision:
+              $ref: '#/components/schemas/reltoone'
+            options:
+              $ref: '#/components/schemas/reltomany'
+    Option:
+      type: object
+      x-examples:
+        Example 1:
+          title: Standard Token Weighting
+          results-title: null
+          info: |
+            <p>Pre-governance decisions should have standard token weighting, for example, 1 token = 1 vote.</p>
+          slug: '12'
+          sort: 5
+          decision_id: 10
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            title:
+              type: string
+            results-title:
+              nullable: true
+            info:
+              type: string
+            slug:
+              type: string
+            sort:
+              type: integer
+        relationships:
+          type: object
+          properties:
+            decision:
+              $ref: '#/components/schemas/reltoone'
+            option-category:
+              $ref: '#/components/schemas/reltoone'
+    Criteria:
+      type: object
+      x-examples:
+        Example 1:
+          title: Stakeholder Alignment
+          slug: alignment
+          weighting: 100
+          info: |
+            <p>This form of token-weighted voting facilitates stakeholder alignment.</p>
+          sort: 10
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            title:
+              type: string
+              nullable: false
+              description: Identifying string
+            info:
+              nullable: true
+              description: content often with html
+              type: string
+            slug:
+              nullable: false
+              description: url-safe unique identifier
+
+              type: string
+            weighting:
+              type: integer
+              nullable: false
+              description: weighting to apply to item
+
+              default: 50
+            sort:
+              default: 0
+              description: display order
+              type: integer
+        relationships:
+          type: object
+          properties:
+            decision:
+              $ref: '#/components/schemas/reltoone'
+    Participant:
+      type: object
+      x-examples:
+        Example 1:
+          slug: User1
+          influence: 1
+          updated_at: '2024-09-17T23:47:41Z'
+          decision_id: 1
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            slug:
+              type: string
+              description: unique identifier
+            influence:
+              type: integer
+              description: weighting for votes
+            updated-at:
+              type: string
+              format: date-time
+              readOnly: true
+        relationships:
+          type: object
+          properties:
+            decision:
+              $ref: '#/components/schemas/reltoone'
+    BinVote:
+      title: BinVote
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            bin:
+              type: integer
+              description: Vote Bin number
+        relationships:
+          type: object
+          properties:
+            decision:
+              $ref: '#/components/schemas/reltoone'
+            criteria:
+              $ref: '#/components/schemas/reltoone'
+            option:
+              $ref: '#/components/schemas/reltoone'
+            participant:
+              $ref: '#/components/schemas/reltoone'
+    ScenarioSet:
+      type: object
+      x-examples:
+        Example 1:
+          status: success
+          error: null
+          scenarios:
+            - 1
+            - 2
+            - 3
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            status:
+              type: string
+            error:
+              nullable: true
+    Scenario:
+      type: object
+      x-examples:
+        Example 1:
+          updated-at: '2024-09-17T16:46:23+0000'
+          global: false
+          rank: 1
+          status: success
+          api-id: '4304875'
+          scenario-set-id: '7129519'
+          quadratic: false
+          options:
+            - 1
+            - 2
+            - 3
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+            updated-at:
+              type: string
+              format: date-time
+              readOnly: true
+              description: Date Time of creation
+            global:
+              type: boolean
+              default: false
+              readOnly: true
+              description: toggle indicating Ranked vs Global scenario
+            rank:
+              type: integer
+              example: 1
+              minimum: 0
+              maximum: 5
+              readOnly: true
+            engine-id:
+              type: integer
+              readOnly: true
+              description: internal database id for Ethelo Debugging
+          required:
+            - global
+            - rank
+        relationships:
+          type: object
+          properties:
+            scenario-set:
+              $ref: '#/components/schemas/reltoone'
+            scenario-results:
+              $ref: '#/components/schemas/reltomany'
+            decision:
+              $ref: '#/components/schemas/reltoone'
+            participant:
+              $ref: '#/components/schemas/reltoone'
+            options:
+              $ref: '#/components/schemas/reltomany'
+    ScenarioResult:
+      type: object
+      x-examples:
+        Example 1:
+          updated-at: '2024-09-17T16:46:23+0000'
+          ethelo: 0.31899
+          approval: 0.42857
+          support: 0.08929
+          dissonance: 0.16518
+          average-weight: null
+          histogram:
+            - 4
+            - 3
+            - 7
+            - 5
+            - 5
+          advanced-total: 0
+          advanced-votes: 0
+          total-votes: 7
+          negative-votes: 7
+          neutral-votes: 7
+          positive-votes: 10
+          abstain-votes: 2
+          option-id: '68903'
+          scenario-id: null
+          criteria-id: null
+          option-category-id: null
+          participant-id: null
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/type'
+        id:
+          $ref: '#/components/schemas/id'
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/link'
+        attributes:
+          type: object
+          properties:
+
+            ethelo:
+              type: number
+            updated-at:
+              type: string
+              format: date-time
+            approval:
+              type: number
+            support:
+              type: number
+            dissonance:
+              type: number
+            histogram:
+              type: array
+              items:
+                type: integer
+            total-votes:
+              type: integer
+            negative-votes:
+              type: integer
+            neutral-votes:
+              type: integer
+            positive-votes:
+              type: integer
+            abstain-votes:
+              type: integer
+          required:
+            - ethelo
+            - approval
+            - support
+            - dissonance
+        relationships:
+          type: object
+          properties:
+            scenario-set:
+              $ref: '#/components/schemas/reltoone'
+            scenario-results:
+              $ref: '#/components/schemas/reltomany'
+            decision:
+              $ref: '#/components/schemas/reltoone'
+            participant:
+              $ref: '#/components/schemas/reltoone'
+            options:
+              $ref: '#/components/schemas/reltomany'
+  parameters:
+    include:
+      name: include
+      in: query
+      description: '[list of included related resources](https://jsonapi.org/format/#fetching-includes)'
+      required: false
+      style: form
+      schema:
+        type: string
+    fields:
+      name: fields
+      in: query
+      description: '[sparse fieldsets](https://jsonapi.org/format/#fetching-sparse-fieldsets).
+
+        Use fields[\<typename\>]=field1,field2,...,fieldN'
+      required: false
+      style: deepObject
+      schema:
+        type: object
+      explode: true
+    sort:
+      name: sort
+      in: query
+      description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+      required: false
+      style: form
+      schema:
+        type: string
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: basic authentication
+servers:
+  - url: http://localhost:8000
+    description: local dev
+security:
+  - basicAuth: []
+  - sessionAuth: []
